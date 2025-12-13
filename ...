@@ -58,6 +58,192 @@ local MainTab = window:AddTab("Main")
 local FarmingTab = window:AddTab("Farming") 
 
 
+FarmingTab:AddLabel("Rebirths & Trade").TextSize = 22
+
+local rebirthValueLabel = FarmingTab:AddLabel("Rebirths: 0")
+rebirthValueLabel.TextSize = 17
+local targetLabel = FarmingTab:AddLabel("Target: None")
+targetLabel.TextSize = 17
+
+local targetRebirths = 0
+local isAutoRebirthing = false
+local rebirthSwitch
+
+local function autoRebirth()
+    isAutoRebirthing = true
+    while isAutoRebirthing and rebirthsStat and rebirthsStat.Value < targetRebirths do
+        if rebirthRemote then rebirthRemote:InvokeServer("rebirthRequest") end
+        task.wait(0.05)
+    end
+    isAutoRebirthing = false
+    if rebirthSwitch then rebirthSwitch:Set(false) end
+end
+
+FarmingTab:AddTextBox("Set Rebirth Target", function(text)
+    local val = tonumber(text)
+    if val and val >= 0 then targetRebirths = val end
+end)
+
+rebirthSwitch = FarmingTab:AddSwitch("Auto Rebirth", function(enabled)
+    if enabled then
+        if rebirthsStat and targetRebirths > 0 and rebirthsStat.Value < targetRebirths then
+            task.spawn(autoRebirth)
+        else
+            rebirthSwitch:Set(false)
+        end
+    else
+        isAutoRebirthing = false
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if rebirthsStat then
+            rebirthValueLabel.Text = "Rebirths: " .. formatNumber(rebirthsStat.Value)
+            targetLabel.Text = "Target Rebirths: " .. formatNumber(targetRebirths)
+        end
+        task.wait(0.2)
+    end
+end) 
+
+local sizeActiveFarming = false
+FarmingTab:AddSwitch("Auto Size 1 (Min)", function(bool) sizeActiveFarming = bool end)
+
+task.spawn(function()
+    while true do
+        if sizeActiveFarming and changeSpeedSizeRemote then
+            local char = player.Character
+            if char and char:FindFirstChildOfClass("Humanoid") then
+                changeSpeedSizeRemote:InvokeServer("changeSize", 1)
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+local targetPositionKing = CFrame.new(-8665.4, 17.21, -5792.9)
+local teleportActiveKing = false
+
+FarmingTab:AddSwitch("Auto Teleport: Muscle King", function(enabled)
+    teleportActiveKing = enabled
+end)
+
+task.spawn(function()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    while true do
+        if teleportActiveKing then
+            if (hrp.Position - targetPositionKing.Position).Magnitude > 5 then
+                hrp.CFrame = targetPositionKing
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+
+
+local AutoTradeFolder = FarmingTab:AddFolder("Auto Trade")
+
+local tradedPlayers = {}
+local tradeActive = false
+
+local function getSixPets()
+    local pets = {}
+    local petFolder = player:FindFirstChild("pets") 
+    if petFolder then
+        for i, pet in ipairs(petFolder:GetChildren()) do
+            if #pets < 6 and pet:IsA("StringValue") then
+                table.insert(pets, pet.Value)
+            end
+        end
+    end
+    return pets
+end
+
+local function teleportToPlayer(targetPlayer)
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local targetChar = targetPlayer.Character
+    if targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
+        local targetHRP = targetChar.HumanoidRootPart
+        hrp.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -5)
+        return true
+    end
+    return false
+end
+
+local function autoTradeRoutine()
+    tradeActive = true
+    while tradeActive do
+        local allPlayers = Players:GetPlayers()
+        local availablePlayers = {}
+
+        for _, p in ipairs(allPlayers) do
+            if p.Name ~= player.Name and not tradedPlayers[p.Name] and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                table.insert(availablePlayers, p)
+            end
+        end
+
+        if #availablePlayers > 0 then
+            local targetPlayer = availablePlayers[math.random(1, #availablePlayers)]
+            local targetName = targetPlayer.Name
+
+            AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Trading " .. targetName
+            
+            local success = teleportToPlayer(targetPlayer)
+
+            if success and tradeRequestRemote then
+                tradeRequestRemote:InvokeServer(targetPlayer) 
+                task.wait(1)
+
+                local petsToSend = getSixPets()
+                if #petsToSend == 6 and addItemRemote then
+                    for _, petID in ipairs(petsToSend) do
+                        addItemRemote:InvokeServer("Pet", petID)
+                        task.wait(0.1)
+                    end
+                end
+                task.wait(1)
+
+                if confirmTradeRemote then
+                    confirmTradeRemote:InvokeServer()
+                    task.wait(0.5)
+                    confirmTradeRemote:InvokeServer()
+                end
+
+                tradedPlayers[targetName] = true
+                AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Traded " .. targetName .. ". Looking for new target."
+                task.wait(2)
+            else
+                AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Target too far or Remotes not found."
+                task.wait(5)
+            end
+        else
+            AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: No untraded players found."
+            task.wait(5)
+        end
+    end
+    AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Disabled"
+end
+
+AutoTradeFolder:AddLabel("Status: Disabled").Name = "TradeStatus"
+
+AutoTradeFolder:AddSwitch("Start Auto Trade", function(enabled)
+    if enabled then
+        if not tradeActive then
+            task.spawn(autoTradeRoutine)
+        end
+    else
+        tradeActive = false
+    end
+end)
+
+AutoTradeFolder:AddButton("Reset Traded List", function()
+    tradedPlayers = {}
+    AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Traded list reset."
+end)
+
 MainTab:AddSwitch("Spin Fortune Wheel", function(bool)
     _G.AutoSpinWheel = bool
     if bool and openFortuneWheelRemote then
