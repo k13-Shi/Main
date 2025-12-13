@@ -10,7 +10,7 @@ if not displayName or displayName == "" then
     displayName = player.Name
 end
 
-local title = ("K13 Shi Private Version | Welcome %s"):format(displayName)
+local title = ("Galaxy Shi Private Version | Welcome %s"):format(displayName)
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CoronaBlanca/Lxbrxrys/refs/heads/main/Xlxrxxm"))()
 
@@ -48,7 +48,7 @@ local function formatNumber(num)
     return formatted
 end
 
-local MainTab = window:AddTab("🏠Main")
+local MainTab = window:AddTab("MainTab")
 MainTab:AddLabel("Utility & Tools").TextSize = 22
 
 local spinwheelSwitch = MainTab:AddSwitch("Spin Fortune Wheel", function(bool)
@@ -867,6 +867,18 @@ task.spawn(function()
     end
 end)
 
+FarmingTab:AddDropdown("Change Time", function(selection)
+    local lighting = game:GetService("Lighting")
+    
+    if selection == "Night" then
+        lighting.ClockTime = 0
+    elseif selection == "Day" then
+        lighting.ClockTime = 12
+    elseif selection == "Midnight" then
+        lighting.ClockTime = 6
+    end
+end):Add("Night"):Add("Day"):Add("Midnight")
+
 local AutoTradeFolder = FarmingTab:AddFolder("Auto Trade")
 
 local tradedPlayers = {}
@@ -971,19 +983,7 @@ AutoTradeFolder:AddSwitch("Start Auto Trade", function(enabled)
     end
 end)
 
-AutoTradeFolder:AddButton("Reset Traded List", function()
+AutoTradeFolder:AddButton("Reset Traded", function()
     tradedPlayers = {}
     AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Traded list reset."
 end)
-
-FarmingTab:AddDropdown("Change Time", function(selection)
-    local lighting = game:GetService("Lighting")
-    
-    if selection == "Night" then
-        lighting.ClockTime = 0
-    elseif selection == "Day" then
-        lighting.ClockTime = 12
-    elseif selection == "Midnight" then
-        lighting.ClockTime = 6
-    end
-end):Add("Night"):Add("Day"):Add("Midnight")
