@@ -1,11 +1,9 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
 
-local leaderstats = player:WaitForChild("leaderstats")
-local rebirthsStat = leaderstats:WaitForChild("Rebirths")
-local muscleEvent = player:WaitForChild("muscleEvent") -- Tiyakin na nandoon ito sa player
+local rebirthsStat = player.leaderstats:WaitForChild("Rebirths")
+local muscleEvent = player:WaitForChild("muscleEvent")
 
 local displayName = player.DisplayName
 if not displayName or displayName == "" then
@@ -22,9 +20,7 @@ local window = library:AddWindow(title, {
     can_resize = true,
 })
 
-local changeSpeedSizeRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote")
-local rebirthRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("rebirthRemote")
-local openFortuneWheelRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("openFortuneWheelRemote")
+local changeSpeedSizeRemote = ReplicatedStorage.rEvents.changeSpeedSizeRemote
 
 function gettool()
     for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
@@ -52,6 +48,9 @@ local function formatNumber(num)
     return formatted
 end
 
+-- =========================================================================
+-- MAIN TAB (Tools and Machines)
+-- =========================================================================
 local MainTab = window:AddTab("MainTab")
 MainTab:AddLabel("Utility & Tools").TextSize = 22
 
@@ -61,7 +60,7 @@ local spinwheelSwitch = MainTab:AddSwitch("Spin Fortune Wheel", function(bool)
     if bool then
         spawn(function()
             while _G.AutoSpinWheel and wait(1) do
-                openFortuneWheelRemote:InvokeServer("openFortuneWheel", ReplicatedStorage.fortuneWheelChances["Fortune Wheel"])
+                ReplicatedStorage.rEvents.openFortuneWheelRemote:InvokeServer("openFortuneWheel", ReplicatedStorage.fortuneWheelChances["Fortune Wheel"])
             end
         end)
     end
@@ -679,6 +678,13 @@ toolsCombFolder:AddSwitch("Auto Weight + Rock", function(Value)
     end
 end)
 
+local function pressE()
+    local vim = game:GetService("VirtualInputManager")
+    vim:SendKeyEvent(true, "E", false, game)
+    task.wait(0.1)
+    vim:SendKeyEvent(false, "E", false, game)
+end
+
 local working = false
 local repTaskMachines = nil
 
@@ -695,32 +701,13 @@ local function stopAutoLiftMachines()
     end
 end
 
-local function interactWithMachine(position)
-    local maxDistance = 10 
-    local machinesFolder = Workspace:FindFirstChild("machinesFolder")
-    if not machinesFolder then return false end
-    
-    for _, machine in ipairs(machinesFolder:GetChildren()) do
-        if machine:IsA("Model") and machine:FindFirstChild("PrimaryPart") then
-            local prompt = machine:FindFirstChildOfClass("ProximityPrompt")
-            if prompt and (machine.PrimaryPart.Position - position.Position).Magnitude < maxDistance then
-                -- Assuming this fires the interaction, as firing the Remote is safer than InputHoldEnd
-                prompt:InputHoldEnd()
-                return true
-            end
-        end
-    end
-    return false
-end
-
-
 local function teleportAndStartMachines(machineName, position)
     local char = game.Players.LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         char.HumanoidRootPart.CFrame = position
         task.wait(0.5)
-
-        if interactWithMachine(position) and working then
+        pressE()
+        if working then
             repTaskMachines = task.spawn(autoLiftMachines)
         end
     end
@@ -786,7 +773,10 @@ MainTab:AddDropdown("Workout Machine", function(machine)
     selectedWorkout = machine
 end):Add("Bench Press"):Add("Squat"):Add("Pull Up"):Add("Boulder")
 
-local FarmingTab = window:AddTab("Farming") -- ETO NA PO ANG DEKLARASYON
+-- =========================================================================
+-- FARMING TAB (Rebirths & Utilities)
+-- =========================================================================
+local FarmingTab = window:AddTab("Farming")
 FarmingTab:AddLabel("Rebirths & Farming Utilities").TextSize = 22
 
 local rebirthValueLabel = FarmingTab:AddLabel("Rebirths: 0")
@@ -803,7 +793,7 @@ local rebirthSwitch
 local function autoRebirth()
     isAutoRebirthing = true
     while isAutoRebirthing and rebirths.Value < targetRebirths do
-        rebirthRemote:InvokeServer("rebirthRequest")
+        ReplicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
         task.wait(0.05)
     end
     isAutoRebirthing = false
@@ -894,112 +884,3 @@ FarmingTab:AddDropdown("Change Time", function(selection)
         lighting.ClockTime = 6
     end
 end):Add("Night"):Add("Day"):Add("Midnight")
-
-local AutoTradeFolder = FarmingTab:AddFolder("Auto Trade Settings")
-
-local tradedPlayers = {}
-local targetTradePlayerName = ""
-local tradeActive = false
-
-local tradeRequestRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("tradeRequest") 
-local addItemRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("addItemToTrade")
-local confirmTradeRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("confirmTrade")
-
-local function getSixPets()
-    local pets = {}
-    local petFolder = player:FindFirstChild("pets") 
-
-    if petFolder then
-        for i, pet in ipairs(petFolder:GetChildren()) do
-            if #pets < 6 and pet:IsA("StringValue") then
-                table.insert(pets, pet.Value)
-            end
-        end
-    end
-    return pets
-end
-
-local function teleportToPlayer(targetPlayer)
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local targetChar = targetPlayer.Character
-    
-    if targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
-        local targetHRP = targetChar.HumanoidRootPart
-        hrp.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -5)
-        return true
-    end
-    return false
-end
-
-local function autoTradeRoutine()
-    tradeActive = true
-    
-    while tradeActive do
-        local allPlayers = Players:GetPlayers()
-        local availablePlayers = {}
-
-        for _, p in ipairs(allPlayers) do
-            if p.Name ~= player.Name and not tradedPlayers[p.Name] and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                table.insert(availablePlayers, p)
-            end
-        end
-
-        if #availablePlayers > 0 then
-            local targetPlayer = availablePlayers[math.random(1, #availablePlayers)]
-            local targetName = targetPlayer.Name
-
-            AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Trading " .. targetName
-            
-            local success = teleportToPlayer(targetPlayer)
-
-            if success and tradeRequestRemote then
-                tradeRequestRemote:InvokeServer(targetPlayer) 
-                task.wait(1)
-
-                local petsToSend = getSixPets()
-                if #petsToSend == 6 and addItemRemote then
-                    for _, petID in ipairs(petsToSend) do
-                        addItemRemote:InvokeServer("Pet", petID)
-                        task.wait(0.1)
-                    end
-                end
-                task.wait(1)
-
-                if confirmTradeRemote then
-                    confirmTradeRemote:InvokeServer()
-                    task.wait(0.5)
-                    confirmTradeRemote:InvokeServer()
-                end
-
-                tradedPlayers[targetName] = true
-                AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Traded " .. targetName .. ". Looking for new target."
-                task.wait(2)
-            else
-                AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Target too far or Remotes not found."
-                task.wait(5)
-            end
-        else
-            AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: No untraded players found."
-            task.wait(5)
-        end
-    end
-    AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Disabled"
-end
-
-AutoTradeFolder:AddLabel("Status: Disabled").Name = "TradeStatus"
-
-AutoTradeFolder:AddSwitch("Start Auto Trade", function(enabled)
-    if enabled then
-        if not tradeActive then
-            task.spawn(autoTradeRoutine)
-        end
-    else
-        tradeActive = false
-    end
-end)
-
-AutoTradeFolder:AddButton("Reset Traded List", function()
-    tradedPlayers = {}
-    AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Traded list reset."
-end)
