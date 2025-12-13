@@ -10,7 +10,7 @@ if not displayName or displayName == "" then
     displayName = player.Name
 end
 
-local title = ("Galaxy Shi Private Version | Welcome %s"):format(displayName)
+local title = ("K13 Shi Paid Version | Ang Pogi Mo %s"):format(displayName)
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CoronaBlanca/Lxbrxrys/refs/heads/main/Xlxrxxm"))()
 
@@ -20,9 +20,6 @@ local window = library:AddWindow(title, {
     can_resize = true,
 })
 
--- =========================================================================
--- MAIN TAB (Dating UtilityTab)
--- =========================================================================
 local MainTab = window:AddTab("MainTab")
 MainTab:AddLabel("MainTab").TextSize = 22
 
@@ -524,126 +521,6 @@ autoEquipToolsFolder:AddSwitch("Fast Tools", function(Value)
     end
 end)
 
--- =========================================================================
--- FARMING TAB (Walang pagbabago sa pangalan ng tab, pero nilagay sa MainTab ang OP Tools)
--- =========================================================================
-local FarmingTab = window:AddTab("Farming")
-
-FarmingTab:AddLabel("Rebirths:").TextSize = 22
-
-local rebirthValueLabel = FarmingTab:AddLabel("Rebirths: 0")
-rebirthValueLabel.TextSize = 17
-
-local targetLabel =  FarmingTab:AddLabel("Target: None")
-targetLabel.TextSize = 17
-
-local function formatNumber(num)
-    local numStr = tostring(num)
-    local formatted = ""
-    local counter = 0
-
-    for i = #numStr, 1, -1 do
-        counter = counter + 1
-        formatted = numStr:sub(i, i) .. formatted
-        if counter % 3 == 0 and i > 1 then
-            formatted = "," .. formatted
-        end
-    end
-    
-    return formatted
-end
-
-local rebirths = rebirthsStat
-local targetRebirths = 0
-local isAutoRebirthing = false
-local rebirthSwitch
-
-local function autoRebirth()
-    isAutoRebirthing = true
-    while isAutoRebirthing and rebirths.Value < targetRebirths do
-        ReplicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
-        task.wait(0.05)
-    end
-    isAutoRebirthing = false
-    if rebirthSwitch then
-        rebirthSwitch:Set(false)
-    end
-end
-
-FarmingTab:AddTextBox("Set Rebirth Target", function(text)
-    local val = tonumber(text)
-    if val and val >= 0 then
-        targetRebirths = val
-    end
-end)
-
-rebirthSwitch = FarmingTab:AddSwitch("Auto Rebirth", function(enabled)
-    if enabled then
-        if targetRebirths > 0 and rebirths.Value < targetRebirths then
-            task.spawn(autoRebirth)
-        else
-            rebirthSwitch:Set(false)
-        end
-    else
-        isAutoRebirthing = false
-    end
-end)
-
-task.spawn(function()
-    while true do
-        rebirthValueLabel.Text = "Rebirths: " .. formatNumber(rebirths.Value)
-        targetLabel.Text = "Target Rebirths: " .. formatNumber(targetRebirths)
-        task.wait(0.2)
-    end
-end) 
-
-local sizeActiveFarming = false
-
-local oneswitch = FarmingTab:AddSwitch("Auto Size 1", function(bool)
-    sizeActiveFarming = bool
-end)
-
-oneswitch:Set(false)
-
-task.spawn(function()
-    while true do
-        if sizeActiveFarming then
-            local character = Players.LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    changeSpeedSizeRemote:InvokeServer("changeSize", 1)
-                end
-            end
-        end
-        task.wait(0.05)
-    end
-end)
-
-local targetPosition = CFrame.new(-8665.4, 17.21, -5792.9)
-local teleportActive = false
-
-local autokingswitch = FarmingTab:AddSwitch("Auto King", function(enabled)
-    teleportActive = enabled
-end)
-
-task.spawn(function()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-
-    while true do
-        if teleportActive then
-            if (hrp.Position - targetPosition.Position).magnitude > 5 then
-                hrp.CFrame = targetPosition
-            end
-        end
-        task.wait(0.05)
-    end
-end)
-
--- *************************************************************************
--- OP TOOLS (Dati nasa FarmingTab, ibinalik sa MainTab)
--- *************************************************************************
 local toolsCombFolder = MainTab:AddFolder("  Auto Tools OP")
 
 local function equipToolFast(player, toolName, repName, repValue)
@@ -756,3 +633,243 @@ toolsCombFolder:AddSwitch("Auto Handstands + Punch", function(Value)
         end
     end
 end)
+
+toolsCombFolder:AddSwitch("Auto Weight + Rock", function(Value)
+    _G.ComboWeightRock = Value
+    local player = game.Players.LocalPlayer
+
+    if Value then
+        task.spawn(function()
+            while _G.ComboWeightRock do
+                equipToolFast(player, "Weight", "repTime", 0)
+                player.muscleEvent:FireServer("rep")
+                
+                equipToolFast(player, "Rock", "repTime", 0)
+                player.muscleEvent:FireServer("rep")
+                
+                task.wait()
+            end
+        end)
+    else
+        local char = player.Character
+        for _, toolName in ipairs({"Weight", "Rock"}) do
+            local eq = char:FindFirstChild(toolName)
+            if eq then eq.Parent = player.Backpack end
+        end
+    end
+end)
+
+local function pressE()
+    local vim = game:GetService("VirtualInputManager")
+    vim:SendKeyEvent(true, "E", false, game)
+    task.wait(0.1)
+    vim:SendKeyEvent(false, "E", false, game)
+end
+
+local working = false
+local repTaskMachines = nil
+
+local function autoLiftMachines()
+    while working and task.wait() do
+        game:GetService("Players").LocalPlayer.muscleEvent:FireServer("rep")
+    end
+end
+
+local function stopAutoLiftMachines()
+    if repTaskMachines then
+        repTaskMachines:Cancel()  
+        repTaskMachines = nil
+    end
+end
+
+local function teleportAndStartMachines(machineName, position)
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = position
+        task.wait(0.5)
+        pressE()
+        if working then
+            repTaskMachines = task.spawn(autoLiftMachines)
+        end
+    end
+end
+
+local workoutPositions = {
+    ["Bench Press"] = {
+        ["Jungle Gym"] = CFrame.new(-8173, 64, 1898),
+        ["Muscle King Gym"] = CFrame.new(-8590.06152, 46.0167427, -6043.34717),
+        ["Legend Gym"] = CFrame.new(4111.91748, 1020.46674, -3799.97217)
+    },
+    ["Squat"] = {
+        ["Jungle Gym"] = CFrame.new(-8352, 34, 2878),
+        ["Muscle King Gym"] = CFrame.new(-8940.12402, 13.1642084, -5699.13477),
+        ["Legend Gym"] = CFrame.new(4304.99023, 987.829956, -4124.2334)
+    },
+    ["Pull Up"] = {
+        ["Jungle Gym"] = CFrame.new(-8666, 34, 2070),
+        ["Muscle King Gym"] = CFrame.new(-8940.12402, 13.1642084, -5699.13477),
+        ["Legend Gym"] = CFrame.new(4304.99023, 987.829956, -4124.2334)
+    },
+    ["Boulder"] = {
+        ["Jungle Gym"] = CFrame.new(-8621, 34, 2684),
+        ["Muscle King Gym"] = CFrame.new(-8940.12402, 13.1642084, -5699.13477),
+        ["Legend Gym"] = CFrame.new(4304.99023, 987.829956, -4124.2334)
+    }
+}
+
+local workoutLocations = {
+    "Jungle Gym", "Muscle King Gym", "Legend Gym"
+}
+
+MainTab:AddLabel("Machines:").TextSize = 22
+
+local selectedLocation = nil
+local selectedWorkout = nil
+
+MainTab:AddSwitch("Start Machine Farm", function(enabled)
+    working = enabled
+
+    if enabled then
+        if selectedLocation and selectedWorkout and workoutPositions[selectedWorkout][selectedLocation] then
+            teleportAndStartMachines(selectedWorkout, workoutPositions[selectedWorkout][selectedLocation])
+        end
+    else
+        stopAutoLiftMachines()
+    end
+end)
+
+local locationDropdown = MainTab:AddDropdown("Gym Location", function(location)
+    selectedLocation = location
+end)
+
+for _, location in ipairs(workoutLocations) do
+    locationDropdown:Add(location)
+end
+
+MainTab:AddDropdown("Workout Machine", function(machine)
+    selectedWorkout = machine
+end):Add("Bench Press"):Add("Squat"):Add("Pull Up"):Add("Boulder")
+
+MainTab:AddLabel("Rebirths:").TextSize = 22
+
+local rebirthValueLabel = MainTab:AddLabel("Rebirths: 0")
+rebirthValueLabel.TextSize = 17
+
+local targetLabel =  MainTab:AddLabel("Target: None")
+targetLabel.TextSize = 17
+
+local function formatNumber(num)
+    local numStr = tostring(num)
+    local formatted = ""
+    local counter = 0
+
+    for i = #numStr, 1, -1 do
+        counter = counter + 1
+        formatted = numStr:sub(i, i) .. formatted
+        if counter % 3 == 0 and i > 1 then
+            formatted = "," .. formatted
+        end
+    end
+    
+    return formatted
+end
+
+local rebirths = rebirthsStat
+local targetRebirths = 0
+local isAutoRebirthing = false
+local rebirthSwitch
+
+local function autoRebirth()
+    isAutoRebirthing = true
+    while isAutoRebirthing and rebirths.Value < targetRebirths do
+        ReplicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
+        task.wait(0.05)
+    end
+    isAutoRebirthing = false
+    if rebirthSwitch then
+        rebirthSwitch:Set(false)
+    end
+end
+
+MainTab:AddTextBox("Set Rebirth Target", function(text)
+    local val = tonumber(text)
+    if val and val >= 0 then
+        targetRebirths = val
+    end
+end)
+
+rebirthSwitch = MainTab:AddSwitch("Auto Rebirth", function(enabled)
+    if enabled then
+        if targetRebirths > 0 and rebirths.Value < targetRebirths then
+            task.spawn(autoRebirth)
+        else
+            rebirthSwitch:Set(false)
+        end
+    else
+        isAutoRebirthing = false
+    end
+end)
+
+task.spawn(function()
+    while true do
+        rebirthValueLabel.Text = "Rebirths: " .. formatNumber(rebirths.Value)
+        targetLabel.Text = "Target Rebirths: " .. formatNumber(targetRebirths)
+        task.wait(0.2)
+    end
+end) 
+
+local sizeActiveFarming = false
+
+local oneswitch = MainTab:AddSwitch("Auto Size 1", function(bool)
+    sizeActiveFarming = bool
+end)
+
+oneswitch:Set(false)
+
+task.spawn(function()
+    while true do
+        if sizeActiveFarming then
+            local character = Players.LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    changeSpeedSizeRemote:InvokeServer("changeSize", 1)
+                end
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+local targetPosition = CFrame.new(-8665.4, 17.21, -5792.9)
+local teleportActive = false
+
+local autokingswitch = MainTab:AddSwitch("Auto King Teleport", function(enabled)
+    teleportActive = enabled
+end)
+
+task.spawn(function()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    while true do
+        if teleportActive then
+            if (hrp.Position - targetPosition.Position).magnitude > 5 then
+                hrp.CFrame = targetPosition
+            end
+        end
+        task.wait(0.05)
+    end
+end)
+
+MainTab:AddDropdown("Change Time", function(selection)
+    local lighting = game:GetService("Lighting")
+    
+    if selection == "Night" then
+        lighting.ClockTime = 0
+    elseif selection == "Day" then
+        lighting.ClockTime = 12
+    elseif selection == "Midnight" then
+        lighting.ClockTime = 6
+    end
+end):Add("Night"):Add("Day"):Add("Midnight")                                        
