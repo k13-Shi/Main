@@ -3,8 +3,9 @@ local player = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
-local rebirthsStat = player.leaderstats:WaitForChild("Rebirths")
-local muscleEvent = player:FindFirstChild("muscleEvent") or ReplicatedStorage:FindFirstChild("muscleEvent")
+local leaderstats = player:WaitForChild("leaderstats")
+local rebirthsStat = leaderstats:WaitForChild("Rebirths")
+local muscleEvent = player:WaitForChild("muscleEvent") -- Tiyakin na nandoon ito sa player
 
 local displayName = player.DisplayName
 if not displayName or displayName == "" then
@@ -21,7 +22,9 @@ local window = library:AddWindow(title, {
     can_resize = true,
 })
 
-local changeSpeedSizeRemote = ReplicatedStorage.rEvents.changeSpeedSizeRemote
+local changeSpeedSizeRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("changeSpeedSizeRemote")
+local rebirthRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("rebirthRemote")
+local openFortuneWheelRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("openFortuneWheelRemote")
 
 function gettool()
     for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
@@ -58,7 +61,7 @@ local spinwheelSwitch = MainTab:AddSwitch("Spin Fortune Wheel", function(bool)
     if bool then
         spawn(function()
             while _G.AutoSpinWheel and wait(1) do
-                ReplicatedStorage.rEvents.openFortuneWheelRemote:InvokeServer("openFortuneWheel", ReplicatedStorage.fortuneWheelChances["Fortune Wheel"])
+                openFortuneWheelRemote:InvokeServer("openFortuneWheel", ReplicatedStorage.fortuneWheelChances["Fortune Wheel"])
             end
         end)
     end
@@ -694,11 +697,15 @@ end
 
 local function interactWithMachine(position)
     local maxDistance = 10 
-    for _, machine in ipairs(Workspace.machinesFolder:GetChildren()) do
+    local machinesFolder = Workspace:FindFirstChild("machinesFolder")
+    if not machinesFolder then return false end
+    
+    for _, machine in ipairs(machinesFolder:GetChildren()) do
         if machine:IsA("Model") and machine:FindFirstChild("PrimaryPart") then
             local prompt = machine:FindFirstChildOfClass("ProximityPrompt")
             if prompt and (machine.PrimaryPart.Position - position.Position).Magnitude < maxDistance then
-                prompt:InputHoldEnd() -- I-fire ang interaction event
+                -- Assuming this fires the interaction, as firing the Remote is safer than InputHoldEnd
+                prompt:InputHoldEnd()
                 return true
             end
         end
@@ -779,7 +786,7 @@ MainTab:AddDropdown("Workout Machine", function(machine)
     selectedWorkout = machine
 end):Add("Bench Press"):Add("Squat"):Add("Pull Up"):Add("Boulder")
 
-local FarmingTab = window:AddTab("Farming")
+local FarmingTab = window:AddTab("Farming") -- ETO NA PO ANG DEKLARASYON
 FarmingTab:AddLabel("Rebirths & Farming Utilities").TextSize = 22
 
 local rebirthValueLabel = FarmingTab:AddLabel("Rebirths: 0")
@@ -796,7 +803,7 @@ local rebirthSwitch
 local function autoRebirth()
     isAutoRebirthing = true
     while isAutoRebirthing and rebirths.Value < targetRebirths do
-        ReplicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
+        rebirthRemote:InvokeServer("rebirthRequest")
         task.wait(0.05)
     end
     isAutoRebirthing = false
@@ -894,9 +901,9 @@ local tradedPlayers = {}
 local targetTradePlayerName = ""
 local tradeActive = false
 
-local tradeRequestRemote = ReplicatedStorage:FindFirstChild("rEvents") and ReplicatedStorage.rEvents:FindFirstChild("tradeRequest") 
-local addItemRemote = ReplicatedStorage:FindFirstChild("rEvents") and ReplicatedStorage.rEvents:FindFirstChild("addItemToTrade")
-local confirmTradeRemote = ReplicatedStorage:FindFirstChild("rEvents") and ReplicatedStorage.rEvents:FindFirstChild("confirmTrade")
+local tradeRequestRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("tradeRequest") 
+local addItemRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("addItemToTrade")
+local confirmTradeRemote = ReplicatedStorage:WaitForChild("rEvents"):WaitForChild("confirmTrade")
 
 local function getSixPets()
     local pets = {}
