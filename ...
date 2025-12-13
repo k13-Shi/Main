@@ -1,9 +1,10 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local rebirthsStat = player.leaderstats:WaitForChild("Rebirths")
-local muscleEvent = player:WaitForChild("muscleEvent")
+local muscleEvent = player:FindFirstChild("muscleEvent") or ReplicatedStorage:FindFirstChild("muscleEvent")
 
 local displayName = player.DisplayName
 if not displayName or displayName == "" then
@@ -675,13 +676,6 @@ toolsCombFolder:AddSwitch("Auto Weight + Rock", function(Value)
     end
 end)
 
-local function pressE()
-    local vim = game:GetService("VirtualInputManager")
-    vim:SendKeyEvent(true, "E", false, game)
-    task.wait(0.1)
-    vim:SendKeyEvent(false, "E", false, game)
-end
-
 local working = false
 local repTaskMachines = nil
 
@@ -698,13 +692,28 @@ local function stopAutoLiftMachines()
     end
 end
 
+local function interactWithMachine(position)
+    local maxDistance = 10 
+    for _, machine in ipairs(Workspace.machinesFolder:GetChildren()) do
+        if machine:IsA("Model") and machine:FindFirstChild("PrimaryPart") then
+            local prompt = machine:FindFirstChildOfClass("ProximityPrompt")
+            if prompt and (machine.PrimaryPart.Position - position.Position).Magnitude < maxDistance then
+                prompt:InputHoldEnd() -- I-fire ang interaction event
+                return true
+            end
+        end
+    end
+    return false
+end
+
+
 local function teleportAndStartMachines(machineName, position)
     local char = game.Players.LocalPlayer.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         char.HumanoidRootPart.CFrame = position
         task.wait(0.5)
-        pressE()
-        if working then
+
+        if interactWithMachine(position) and working then
             repTaskMachines = task.spawn(autoLiftMachines)
         end
     end
@@ -879,7 +888,7 @@ FarmingTab:AddDropdown("Change Time", function(selection)
     end
 end):Add("Night"):Add("Day"):Add("Midnight")
 
-local AutoTradeFolder = FarmingTab:AddFolder("Auto Trade")
+local AutoTradeFolder = FarmingTab:AddFolder("Auto Trade Settings")
 
 local tradedPlayers = {}
 local targetTradePlayerName = ""
@@ -983,7 +992,7 @@ AutoTradeFolder:AddSwitch("Start Auto Trade", function(enabled)
     end
 end)
 
-AutoTradeFolder:AddButton("Reset Traded", function()
+AutoTradeFolder:AddButton("Reset Traded List", function()
     tradedPlayers = {}
     AutoTradeFolder:GetLabel("TradeStatus").Text = "Status: Traded list reset."
 end)
