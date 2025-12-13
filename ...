@@ -54,7 +54,7 @@ local function formatNumber(num)
     return formatted
 end
 
-local MainTab = window:AddTab("MainTab")
+local MainTab = window:AddTab("Main")
 local FarmingTab = window:AddTab("Farming") 
 
 
