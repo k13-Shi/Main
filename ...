@@ -23,6 +23,7 @@ local window = library:AddWindow(title, {
     can_resize = true,
 })
 
+
 local MainTab = window:AddTab("Main")
 local FarmingTab = wMindow:AddTab("Farming")
 local KillingTab = window:AddTab("Killing")
