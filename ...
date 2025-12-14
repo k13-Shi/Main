@@ -15,7 +15,7 @@ end
 
 local title = ("Shi Private Version | Welcome %s"):format(displayName)
 
--- ITO ANG INAYOS NA LINE PARA SA LIBRARY LOAD
+-- ITO ANG CRITICAL LINE: TAMANG URL NG LINORIA LIBRARY
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua", true))()
 
 local window = library:AddWindow(title, {
