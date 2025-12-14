@@ -5,14 +5,6 @@ local localPlayer = Players.LocalPlayer
 local username = localPlayer.Name
 local userId = localPlayer.UserId
 
-local Player = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualUser = game:GetService("VirtualUser")
-local muscleEvent = Player:WaitForChild("muscleEvent")
-local antiAFKConnection
-
-
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
@@ -31,17 +23,6 @@ local window = library:AddWindow(title, {
     can_resize = true,
 })
 
-local function setupAntiAFK()
-    if antiAFKConnection then
-        antiAFKConnection:Disconnect()
-    end
-
-    antiAFKConnection = Player.Idled:Connect(function()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end)
-end
-setupAntiAFK
 local MainTab = window:AddTab("Main")
 local FarmingTab = wMindow:AddTab("Farming")
 local FastRebTab = window:AddTab("Fast Rebirth
