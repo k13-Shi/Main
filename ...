@@ -1313,7 +1313,7 @@ local function ensureEggEquipped()
     local eggsInHand = 0
     for _, item in ipairs(player.Character:GetChildren()) do
         if item.Name == "Protein Egg" then
-            eggsInHand += 1
+            eggsInHand = 1
             if eggsInHand > 1 then
                 item.Parent = player.Backpack
             end
