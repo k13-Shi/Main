@@ -13,9 +13,9 @@ if not displayName or displayName == "" then
 end
 local title = ("Shi Private Version | Welcome %s"):format(displayName)
 
--- ETO NA PO ANG FIXED LINE! Pinalitan ang sirang link ng STABLE na GUI Library.
--- Titiyakin nito na lalabas ang iyong tabs at laman.
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua"))()
+-- <--- ETO PO ANG INAYOS NA LINE NA DAPAT GUMANA NA --->
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/Library.lua", true))()
+-- <--- WAKAS NG INAYOS NA LINE --->
 
 local window = library:AddWindow(title, {
     main_color = Color3.fromRGB(80, 0, 130),
