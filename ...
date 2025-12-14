@@ -24,7 +24,7 @@ local window = library:AddWindow(title, {
 })
 
 local MainTab = window:AddTab("Main")
-local FarmingTab = Mindow:AddTab("Farming")
+local FarmingTab = window:AddTab("Farming")
 local KillingTab = window:AddTab("Killing")
 local extraTab = window:AddTab("Extra")
 
@@ -182,7 +182,7 @@ local PetsTab = window:AddTab("Pet Shop")
 local TeleportTab = window:AddTab("Teleports")
 local StatsTab = window:AddTab("Stats")
 local infoTab = window:AddTab("Info")
-local Gift = window:AddTab("Gift") -- Iba-block nito ang error na "nil value" sa Gift
+local Gift = window:AddTab("Gift")
 
 KillingTab:Show()
 
@@ -987,7 +987,7 @@ local function calculateEnemyHealth(targetPlayer)
     return totalHealth
 end
 
-local Player = game.Players.LocalPlayer -- Ensure Player is defined for the next function
+local Player = game.Players.LocalPlayer
 
 local function calculateLocalPlayerDamage()
     local strengthStat = nil
@@ -1571,7 +1571,6 @@ task.spawn(function()
     end
 end)
 
--- LOGIC FOR INVENTORY/GIFTING/AUTO-EAT (REQUESTED)
 InventoryTab:AddLabel("Protein:").TextSize = 22
 local autoEatBoostsEnabled = false
 local autoGiftEggsEnabled = false
@@ -1758,11 +1757,9 @@ task.spawn(function()
     end
 end)
 
--- ANG SWITCH PARA SA AUTO CLEAR INVENTORY (SA PINAKA-DULO)
 InventoryTab:AddSwitch("Auto Clear Inventory", function(state)
     autoEatBoostsEnabled = state
 end)
--- END OF INVENTORY/GIFTING/AUTO-EAT LOGIC
 
 TeleportTab:AddLabel("TP:").TextSize = 22
 TeleportTab:AddButton("Tiny Island",function()
@@ -1912,6 +1909,31 @@ local stats = {
 
 local initialValues = {}
 local statLabels = {}
+
+local function formatNumber(n)
+    if n >= 1e15 then
+        return string.format("%.1fqa", n/1e15)
+    elseif n >= 1e12 then
+        return string.format("%.1ft", n/1e12)
+    elseif n >= 1e9 then
+        return string.format("%.1fb", n/1e9)
+    elseif n >= 1e6 then
+        return string.format("%.1fm", n/1e6)
+    elseif n >= 1e3 then
+        return string.format("%.1fk", n/1e3)
+    else
+        return tostring(n)
+    end
+end
+
+local function formatWithCommas(n)
+    local formatted = tostring(math.floor(n))
+    while true do
+        formatted, k = formatted:gsub("^(-?%d+)(%d%d%d)", '%1,%2')
+        if k == 0 then break end
+    end
+    return formatted
+end
 
 for _, info in ipairs(stats) do
     initialValues[info.name] = info.stat.Value
