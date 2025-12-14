@@ -1751,7 +1751,7 @@ local workoutLocations = {
     "Jungle Gym", "Muscle King Gym", "Legend Gym"
 }
 
-MainTab:AddSwitch("Start"), function(enabled)
+MainTab:AddSwitch("Start", function(enabled)
     working = enabled
 
     if enabled then
