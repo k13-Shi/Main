@@ -81,7 +81,6 @@ ReplicatedStorage.ChildAdded:Connect(function(child)
 end)
 
 local MainTab = window:AddTab("Main")
-local FarmingTab = window:AddTab("Farming")
 local KillingTab = window:AddTab("Killing")
 local extraTab = window:AddTab("Extra")
 
