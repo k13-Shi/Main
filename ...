@@ -392,26 +392,6 @@ local antiKnockbackSwitch = MainTab:AddSwitch("Anti Fling", function(bool)
 end)
 antiKnockbackSwitch:Set(true)
 
-local function activateProteinEgg()
-    local tool = LocalPlayer.Character:FindFirstChild("Protein Egg") or LocalPlayer.Backpack:FindFirstChild("Protein Egg")
-    if tool then
-        muscleEvent:FireServer("proteinEgg", tool)
-    end
-end
-
-local isAutoEggRunning = false
-
-task.spawn(function()
-    while true do
-        if isAutoEggRunning then
-            activateProteinEgg()
-            task.wait(1800)
-        else
-            task.wait(1)
-        end
-    end
-end)
-
 local autoEggSwitch = MainTab:AddSwitch("Auto Egg", function(state)
     isAutoEggRunning = state
     if state then
