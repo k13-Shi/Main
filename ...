@@ -43,29 +43,6 @@ local function setupAntiAFK()
 end
 setupAntiAFK()
 
-local function removePortals()
-    for _, portal in pairs(game:GetDescendants()) do
-        if portal.Name == "RobloxForwardPortals" then
-            portal:Destroy()
-        end
-    end
-    if _G.AdRemovalConnection then
-        _G.AdRemovalConnection:Disconnect()
-    end
-    
-    _G.AdRemovalConnection = game.DescendantAdded:Connect(function(descendant)
-        if descendant.Name == "RobloxForwardPortals" then
-            descendant:Destroy()
-        end
-    end)
-end
-removePortals()
-
-ReplicatedStorage.ChildAdded:Connect(function(child)
-    if table.find(blockedFrames, child.Name) and child:IsA("GuiObject") then
-        child.Visible = false
-    end
-end)
 
 local MainTab = window:AddTab("Main")
 local FarmingTab = window:AddTab("Farming")
