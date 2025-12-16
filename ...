@@ -1380,6 +1380,24 @@ end)
 
 FarmingTab:AddLabel("Misc").TextSize = 22
 
+local rebirthEvent = game:GetService("ReplicatedStorage").rEvents.rebirthRemote
+local rebirthDelay = 0.05
+_G.FastRebirthActive = false 
+
+local fastRebirthSwitch = FarmingTab:AddSwitch("Fast Rebirth", function(state)
+    _G.FastRebirthActive = state
+end)
+fastRebirthSwitch:Set(false)
+
+task.spawn(function()
+    while task.wait() do 
+        if _G.FastRebirthActive then
+            rebirthEvent:FireServer() 
+            task.wait(rebirthDelay) 
+        end
+    end
+end)
+
 local autoLiftSwitch = FarmingTab:AddSwitch("Auto Lift (Gamepass)", function(bool)
     if bool then
         local gamepassFolder = game:GetService("ReplicatedStorage").gamepassIds
