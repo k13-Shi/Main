@@ -397,37 +397,6 @@ local antiKnockbackSwitch = MainTab:AddSwitch("Anti Fling", function(bool)
 end)
 antiKnockbackSwitch:Set(true)
 
-MainTab:AddSwitch("Fast Rebirth", function(state)
-    isRunning = state
-    
-    if state then
-        startTime = tick()
-        task.spawn(fastRebirthLoop)
-    else
-        totalElapsed = totalElapsed + (tick() - startTime)
-        updateUI(true)
-    end
-end)
-
-rebirthsStat:GetPropertyChangedSignal("Value"):Connect(function()
-    if isRunning then
-        calculatePace()
-    end
-    updateRebirthsLabel() 
-end)
-
-task.spawn(function()
-    while true do
-        updateUI(false)
-        task.wait(0.1)
-    end
-end)
-
-
-local running = false
-local thread = nil
-
-
 local lockRunning = false
 local lockThread = nil
 
