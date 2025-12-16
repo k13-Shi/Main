@@ -392,50 +392,6 @@ local antiKnockbackSwitch = MainTab:AddSwitch("Anti Fling", function(bool)
 end)
 antiKnockbackSwitch:Set(true)
 
-local muscleEvent = ReplicatedStorage.rEvents.muscleRemote
-local isFastStrengthRunning = false
-
-local fastStrengthSwitch = MainTab:AddSwitch("Fast Strength", function(state)
-    isFastStrengthRunning = state
-end)
-fastStrengthSwitch:Set(false)
-
-task.spawn(function()
-    while task.wait(0.01) do
-        if isFastStrengthRunning then
-            local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-            if tool then
-                muscleEvent:FireServer("lift", tool)
-            end
-        end
-    end
-end)
-
-local function unequipPets()
-    local petsFolder = LocalPlayer:FindFirstChild("petsFolder")
-    if not petsFolder then return end
-    for _, folder in petsFolder:GetChildren() do
-        if folder:IsA("Folder") then
-            for _, pet in folder:GetChildren() do
-                ReplicatedStorage.rEvents.equipPetEvent:FireServer("unequipPet", pet)
-            end
-        end
-    end
-    task.wait(0.1)
-end
-
-local function equipPetsByName(name)
-    unequipPets()
-    task.wait(0.01)
-    local uniqueFolder = LocalPlayer.petsFolder:FindFirstChild("Unique")
-    if not uniqueFolder then return end
-    for _, pet in uniqueFolder:GetChildren() do
-        if pet.Name == name then
-            ReplicatedStorage.rEvents.equipPetEvent:FireServer("equipPet", pet)
-        end
-    end
-end
-
 local function activateProteinEgg()
     local tool = LocalPlayer.Character:FindFirstChild("Protein Egg") or LocalPlayer.Backpack:FindFirstChild("Protein Egg")
     if tool then
@@ -1532,24 +1488,6 @@ task.spawn(function()
 end)
 
 FarmingTab:AddLabel("Misc").TextSize = 22
-
-local rebirthEvent = ReplicatedStorage.rEvents.rebirthRemote
-local rebirthDelay = 0.05
-_G.FastRebirthActive = false 
-
-local fastRebirthSwitch = FarmingTab:AddSwitch("Fast Rebirth", function(state)
-    _G.FastRebirthActive = state
-end)
-fastRebirthSwitch:Set(false)
-
-task.spawn(function()
-    while task.wait() do 
-        if _G.FastRebirthActive then
-            rebirthEvent:FireServer("rebirthRequest")
-            task.wait(rebirthDelay) 
-        end
-    end
-end)
 
 local autoLiftSwitch = FarmingTab:AddSwitch("Auto Lift (Gamepass)", function(bool)
     if bool then
