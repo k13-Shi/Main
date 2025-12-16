@@ -397,6 +397,7 @@ local antiKnockbackSwitch = MainTab:AddSwitch("Anti Fling", function(bool)
 end)
 antiKnockbackSwitch:Set(true)
 
+
 MainTab:AddButton("Jungle Lift",function()
     local player = game.Players.LocalPlayer
     local char = player.Character or Player.CharacterAdded:wait()
@@ -523,7 +524,6 @@ MainTab:AddButton("Anti Lag", function()
     removeLightSources()
     darkenSky()
 end)
-
 
 local lockRunning = false
 local lockThread = nil
