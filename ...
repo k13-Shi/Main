@@ -397,6 +397,177 @@ local antiKnockbackSwitch = MainTab:AddSwitch("Anti Fling", function(bool)
 end)
 antiKnockbackSwitch:Set(true)
 
+local player = game.Players.LocalPlayer
+local muscleEvent = game:GetService("ReplicatedStorage").rEvents.muscleRemote
+
+local isFastStrengthRunning = false
+
+local fastStrengthSwitch = MainTab:AddSwitch("Fast Strength", function(state)
+    isFastStrengthRunning = state
+end)
+fastStrengthSwitch:Set(false)
+
+task.spawn(function()
+    while task.wait() do 
+        if isFastStrengthRunning then
+            muscleEvent:FireServer("lift", player.Character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool"))
+            task.wait(0.01) 
+        end
+    end
+end)
+
+local function unequipPets()
+    for _, folder in pairs(Player.petsFolder:GetChildren()) do
+        if folder:IsA("Folder") then
+            for _, pet in pairs(folder:GetChildren()) do
+                ReplicatedStorage.rEvents.equipPetEvent:FireServer("unequipPet", pet)
+            end
+        end
+    end
+    task.wait(0.1)
+end
+
+local function equipPetsByName(name)
+    unequipPets()
+    task.wait(0.01)
+    for _, pet in pairs(Player.petsFolder.Unique:GetChildren()) do
+        if pet.Name == name then
+            ReplicatedStorage.rEvents.equipPetEvent:FireServer("equipPet", pet)
+        end
+    end
+end
+
+local function activateProteinEgg()
+    local tool = Player.Character:FindFirstChild("Protein Egg") or Player.Backpack:FindFirstChild("Protein Egg")
+    if tool then
+        muscleEvent:FireServer("proteinEgg", tool)
+    end
+end
+
+local running = false
+
+task.spawn(function()
+    while true do
+        if running then
+            activateProteinEgg()
+            task.wait(1800)
+        else
+            task.wait(1)
+        end
+    end
+end)
+
+local switch = MainTab:AddSwitch("Auto Egg", function(state)
+    running = state
+    if state then
+        activateProteinEgg()
+    end
+end)
+switch:Set(false)
+
+MainTab:AddButton("Jungle Squat",function()
+    local player = game.Players.LocalPlayer
+    local char = player.Character or Player.CharacterAdded:wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    hrp.CFrame = CFrame.new(-8371.43359375, 6.79806327, 2858.88525390)
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+MainTab:AddButton("Anti Lag", function()
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local lighting = game:GetService("Lighting")
+
+    for _, gui in pairs(playerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") then
+            gui:Destroy()
+        end
+    end
+
+    local function darkenSky()
+        for _, v in pairs(lighting:GetChildren()) do
+            if v:IsA("Sky") then
+                v:Destroy()
+            end
+        end
+
+        local darkSky = Instance.new("Sky")
+        darkSky.Name = "DarkSky"
+        darkSky.SkyboxBk = "rbxassetid://0"
+        darkSky.SkyboxDn = "rbxassetid://0"
+        darkSky.SkyboxFt = "rbxassetid://0"
+        darkSky.SkyboxLf = "rbxassetid://0"
+        darkSky.SkyboxRt = "rbxassetid://0"
+        darkSky.SkyboxUp = "rbxassetid://0"
+        darkSky.Parent = lighting
+
+        lighting.Brightness = 0
+        lighting.ClockTime = 0
+        lighting.TimeOfDay = "00:00:00"
+        lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+        lighting.Ambient = Color3.new(0, 0, 0)
+        lighting.FogColor = Color3.new(0, 0, 0)
+        lighting.FogEnd = 100
+
+        task.spawn(function()
+            while true do
+                wait(5)
+                if not lighting:FindFirstChild("DarkSky") then
+                    darkSky:Clone().Parent = lighting
+                end
+                lighting.Brightness = 0
+                lighting.ClockTime = 0
+                lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+                lighting.Ambient = Color3.new(0, 0, 0)
+                lighting.FogColor = Color3.new(0, 0, 0)
+                lighting.FogEnd = 100
+            end
+        end)
+    end
+
+    local function removeParticleEffects()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("ParticleEmitter") then
+                obj:Destroy()
+            end
+        end
+    end
+
+    local function removeLightSources()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+                obj:Destroy()
+            end
+        end
+    end
+
+    removeParticleEffects()
+    removeLightSources()
+    darkenSky()
+end)
+
+MainTab:AddButton("Equip Swift Samurai", function()
+    unequipPets()
+    equipPetsByName("Swift Samurai")
+end)
+
+
+local running = false
+
+task.spawn(function()
+    while true do
+        if running then
+            activateShake()
+            task.wait(900)
+        else
+            task.wait(1)
+        end
+    end
+end)
+
 local lockRunning = false
 local lockThread = nil
 
